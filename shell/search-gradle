@@ -1,0 +1,35 @@
+search_gradle(){
+  echo "{ \"items\":["
+  separator=""
+  if [ $# -eq 0 ];then
+       echo "{"
+       echo "\"title\": \"请输入要查找的jar包名称\","
+       echo "}"
+       echo "]}"
+       exit
+  fi
+  local expr="-iname '*$1*'"
+  shift
+  for i in $*
+  do
+    expr="${expr} -a -iname '*${i}*'"
+  done
+
+  expr="find ~/.gradle/caches/modules-2/files-2.1 -type d \( `echo ${expr}` \) | grep  -vE '\.[a-zA-Z]+$' " 
+#  echo "${expr}"
+  eval "${expr}" | uniq | sort | while read line
+  do
+    title=${line##*/}
+    echo ${separator}
+    separator=","
+    echo "{"
+    echo "\"uid\": \"${title}\","
+    echo "\"type\": \"file\","
+    echo "\"title\": \"${title}\","
+    echo "\"arg\": \"${title}\""
+    echo "}"
+  done 
+  echo "]}" 
+}
+
+search_gradle $*

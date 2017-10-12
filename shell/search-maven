@@ -1,0 +1,35 @@
+#!/bin/bash 
+search_m2(){
+  echo "{ \"items\":["
+  separator=""
+  if [ $# -eq 0 ];then
+       echo "{"
+       echo "\"title\": \"请输入要查找的jar包名称\","
+       echo "}"
+       echo "]}"
+       exit
+  fi
+  local expr="-iname '*$1*.jar'"
+  shift
+  for i in $*
+  do
+    expr="${expr} -a -iname '*${i}*.jar'"
+  done
+
+  expr="find ~/.m2 -type f \( `echo ${expr}` \) | sed 's/\/[0-9].*\/.*.jar//g' | uniq "
+  eval "${expr}" | sort | while read line
+  do
+    title=${line##*/}
+    echo ${separator}
+    separator=","
+    echo "{"
+    echo "\"uid\": \"${title}\","
+    echo "\"type\": \"file\","
+    echo "\"title\": \"${title}\","
+    echo "\"arg\": \"${title}\""
+    echo "}"
+  done 
+  echo "]}" 
+}
+
+search_m2 $*
