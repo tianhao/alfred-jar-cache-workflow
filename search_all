@@ -1,0 +1,53 @@
+maven_expr(){
+	local expr="-iname '*$1*.jar'"
+	shift
+	for i in $*
+	do
+    	expr="${expr} -a -iname '*${i}*.jar'"
+	done
+	expr="find ~/.m2 -type f \( `echo ${expr}` \) | sed 's/\/[0-9].*\/.*.jar//g' | uniq "
+	echo "$expr"
+}
+
+gradle_expr(){
+	local expr="-iname '*$1*'"
+	shift
+	for i in $*
+	do
+    	expr="${expr} -a -iname '*${i}*'"
+	done
+	expr="find ~/.gradle/caches/modules-2/files-2.1 -type d \( `echo ${expr}` \) | grep  -vE '\.[a-zA-Z]+$' "
+	echo "$expr"
+}
+
+search_all(){
+  echo "{ \"items\":["
+  separator=""
+  if [ $# -eq 0 ];then
+       echo "{"
+       echo "\"title\": \"请输入要查找的jar包名称\","
+       echo "}"
+       echo "]}"
+       exit
+  fi
+  expr1=$(maven_expr $*)
+  expr2=$(gradle_expr $*)
+  a=$(eval $expr1)
+  b=$(eval $expr2)
+
+  echo $a\\n$b |grep -vE "^$" | sort| uniq | while read line
+  do
+    line=${line##*/}
+    echo ${separator}
+    separator=","
+    echo "{"
+    echo "\"uid\": \"${line}\","
+    echo "\"type\": \"file\","
+    echo "\"title\": \"${line}\","
+    echo "\"arg\": \"${line}\""
+    echo "}"
+  done 
+  echo "]}"
+}
+
+search_all $*
